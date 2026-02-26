@@ -4,11 +4,9 @@ import logging
 import subprocess
 import sys
 import traceback
+from dataclasses import asdict
 
-from PySide6.QtCore import QTimer
-
-from sibglass_app.config.paths import GLASS_FILE
-from sibglass_app.config.settings import SettingsManager
+from sibglass_app.config.settings import AppSettings, SettingsManager
 from sibglass_app.models.formula_item import FormulaRowState
 from sibglass_app.models.order_item import OrderItem
 from sibglass_app.services.alupro_parser import AluProParserService
@@ -17,9 +15,9 @@ from sibglass_app.services.formula_builder import FormulaBuilderService
 from sibglass_app.services.glass_catalog_service import GlassCatalogService
 from sibglass_app.services.sibglass_writer import SibglassWriterService
 from sibglass_app.services.validation_service import ValidationService
-from sibglass_app.utils.text_utils import is_numeric_formula
 from sibglass_app.views.dialogs import ManualInputDialog
 from sibglass_app.views.main_window import MainWindow
+from sibglass_app.utils.text_utils import is_numeric_formula
 
 logger = logging.getLogger(__name__)
 
@@ -49,13 +47,11 @@ class MainController:
 
         self.settings = self.settings_manager.load()
         self.catalog = None
-        self._glass_mtime: float | None = None
 
         self._bind()
         self._load_catalog()
         self._restore_autosave_if_needed()
         self._apply_settings()
-        self._start_glass_file_watcher()
 
     def _bind(self) -> None:
         self.window.select_alupro_btn.clicked.connect(self.on_pick_alupro)
@@ -89,17 +85,8 @@ class MainController:
         if not exists:
             self.window.show_warning("Файл glass.txt не найден. Доступен только ручной ввод.")
         self._refresh_catalog_ui()
-        self._remember_glass_mtime()
-
-    def _remember_glass_mtime(self) -> None:
-        self._glass_mtime = GLASS_FILE.stat().st_mtime if GLASS_FILE.exists() else None
 
     def _refresh_catalog_ui(self) -> None:
-        current_outer = self.window.outer_combo.currentText()
-        current_middle = self.window.middle_combo.currentText()
-        current_inner = self.window.inner_combo.currentText()
-        current_spacer = self.window.spacer_combo.currentText()
-
         self.window.outer_combo.clear()
         self.window.outer_combo.addItems(self.catalog.outer_glass)
 
@@ -112,68 +99,26 @@ class MainController:
         self.window.spacer_combo.clear()
         self.window.spacer_combo.addItems(self.catalog.spacers)
 
-        self._select_if_exists(self.window.outer_combo, current_outer)
-        self._select_if_exists(self.window.middle_combo, current_middle)
-        self._select_if_exists(self.window.inner_combo, current_inner)
-        self._select_if_exists(self.window.spacer_combo, current_spacer)
-
-    @staticmethod
-    def _select_if_exists(combo, value: str) -> None:
-        if not value:
-            return
-        idx = combo.findText(value)
-        if idx >= 0:
-            combo.setCurrentIndex(idx)
-
     def _restore_autosave_if_needed(self) -> None:
         payload = self.autosave_service.load_state()
         if not payload:
             return
         if not self.window.ask_restore():
             return
-
         self.window.alupro_line.setText(payload.get("alupro", ""))
         self.window.sibglass_line.setText(payload.get("sibglass", ""))
-        self.window.customer_line.setText(payload.get("customer", self.window.customer_line.text()))
+        self.window.customer_line.setText(payload.get("customer", ""))
         self.window.address_line.setText(payload.get("address", ""))
         self.window.zak_outer.setChecked(payload.get("zak_outer", False))
         self.window.zak_middle.setChecked(payload.get("zak_middle", False))
         self.window.zak_inner.setChecked(payload.get("zak_inner", False))
         self.window.argon.setChecked(payload.get("argon", False))
 
-        self._select_if_exists(self.window.outer_combo, payload.get("outer", ""))
-        self._select_if_exists(self.window.middle_combo, payload.get("middle", ""))
-        self._select_if_exists(self.window.inner_combo, payload.get("inner", ""))
-        self._select_if_exists(self.window.spacer_combo, payload.get("spacer", ""))
-
-    def _start_glass_file_watcher(self) -> None:
-        self._watch_timer = QTimer(self.window)
-        self._watch_timer.setInterval(1200)
-        self._watch_timer.timeout.connect(self._reload_catalog_if_changed)
-        self._watch_timer.start()
-
-    def _reload_catalog_if_changed(self) -> None:
-        if not GLASS_FILE.exists():
-            return
-        mtime = GLASS_FILE.stat().st_mtime
-        if self._glass_mtime is not None and mtime <= self._glass_mtime:
-            return
-        try:
-            self.catalog = self.glass_catalog_service.load_or_empty()[0]
-            self._refresh_catalog_ui()
-            self._glass_mtime = mtime
-        except Exception:
-            logger.exception("Не удалось обновить справочник glass.txt")
-
     def on_pick_alupro(self) -> None:
         path = self.window.pick_file("Выберите файл AluPro", self.settings.last_alupro_path)
         if not path:
             return
-        try:
-            self._validate_file(path, marker="Заполнения")
-        except Exception:
-            return
-
+        self._validate_file(path, marker="Заполнения")
         self.window.alupro_line.setText(path)
         self.settings.last_alupro_path = path
         self.settings_manager.save(self.settings)
@@ -183,11 +128,7 @@ class MainController:
         path = self.window.pick_file("Выберите файл заявки СибГласс", self.settings.last_sibglass_path)
         if not path:
             return
-        try:
-            self._validate_file(path, marker="ЗАЯВКА НА РАСЧЕТ СТЕКЛОПАКЕТОВ")
-        except Exception:
-            return
-
+        self._validate_file(path, marker="ЗАЯВКА НА РАСЧЕТ СТЕКЛОПАКЕТОВ")
         self.window.sibglass_line.setText(path)
         self.settings.last_sibglass_path = path
         self.settings_manager.save(self.settings)
@@ -204,14 +145,12 @@ class MainController:
     def _load_formulas(self) -> None:
         try:
             items = self.parser_service.parse(self.window.alupro_line.text())
-            unique = sorted({item.formula.strip() for item in items if item.formula.strip()})
+            unique = sorted({item.formula for item in items})
             rows = [FormulaRowState(source_formula=f) for f in unique]
             for row in rows:
                 if is_numeric_formula(row.source_formula):
                     row.resolved_formula = self._autobuild(row.source_formula)
             self.window.formula_table.set_rows(rows)
-            if not rows:
-                self.window.show_warning("В блоке 'Заполнения' не найдены строки формул.")
         except Exception:
             logger.exception("Ошибка парсинга AluPro")
             self.window.show_error("Не удалось разобрать файл AluPro. Подробности в errors.log")
@@ -271,31 +210,18 @@ class MainController:
         dialog = ManualInputDialog(title, parent=self.window)
         if dialog.exec() != dialog.Accepted:
             return
-
         value = dialog.value
         if not value:
             return
-
-        try:
-            self.catalog = self.glass_catalog_service.add_value(self.catalog, section_attr, value)
-            self.glass_catalog_service.save(self.catalog)
-            self._refresh_catalog_ui()
-            combo_by_section = {
-                "outer_glass": self.window.outer_combo,
-                "middle_glass": self.window.middle_combo,
-                "inner_glass": self.window.inner_combo,
-                "spacers": self.window.spacer_combo,
-            }
-            self._select_if_exists(combo_by_section[section_attr], value)
-            self._remember_glass_mtime()
-        except Exception:
-            logger.exception("Не удалось сохранить ручной ввод в glass.txt")
-            self.window.show_error("Не удалось сохранить значение в glass.txt")
+        self.catalog = self.glass_catalog_service.add_value(self.catalog, section_attr, value)
+        self.glass_catalog_service.save(self.catalog)
+        self._refresh_catalog_ui()
 
     def on_open_glass_file(self) -> None:
+        from sibglass_app.config.paths import GLASS_FILE
+
         if not GLASS_FILE.exists():
             self.glass_catalog_service.save(self.catalog)
-            self._remember_glass_mtime()
         try:
             if sys.platform.startswith("win"):
                 subprocess.Popen(["notepad.exe", str(GLASS_FILE)])

@@ -50,7 +50,6 @@ class MainWindow(QMainWindow):
 
         form_layout = QFormLayout()
         self.customer_line = QLineEdit(self)
-        self.customer_line.setText("ИП Колодинов С.С.")
         self.address_line = QLineEdit(self)
         form_layout.addRow("Заказчик", self.customer_line)
         form_layout.addRow("Адрес", self.address_line)

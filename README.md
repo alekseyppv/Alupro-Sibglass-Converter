@@ -63,10 +63,9 @@ Production-ready desktop приложение на **Python 3.11+** для ав�
 ```bash
 python -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
-pip install pyside6 pandas openpyxl xlrd
+pip install pyside6 pandas openpyxl
 python -m sibglass_app.main
 ```
-> Для чтения старых `.xls` файлов требуется `xlrd>=2.0.1`.
 
 ## 6. Сборка в .exe (PyInstaller)
 
