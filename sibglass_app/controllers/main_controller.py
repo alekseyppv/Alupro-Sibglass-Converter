@@ -11,6 +11,7 @@ from sibglass_app.config.paths import GLASS_FILE
 from sibglass_app.config.settings import SettingsManager
 from sibglass_app.models.formula_item import FormulaRowState
 from sibglass_app.models.glass_catalog import GlassCatalog
+from sibglass_app.models.glass_catalog import GlassCatalog
 from sibglass_app.models.order_item import OrderItem
 from sibglass_app.services.alupro_parser import AluProParserService
 from sibglass_app.services.autosave_service import AutosaveService
@@ -49,6 +50,7 @@ class MainController:
         self.excel_repository = excel_repository
 
         self.settings = self.settings_manager.load()
+        self.catalog = GlassCatalog()
         self.catalog = GlassCatalog()
         self._glass_mtime: float | None = None
 
@@ -281,6 +283,7 @@ class MainController:
         try:
             self.catalog = self.glass_catalog_service.add_value(self.catalog, section_attr, value)
             self.glass_catalog_service.save(self.catalog)
+            self.catalog, _ = self.glass_catalog_service.load_or_empty()
             self.catalog, _ = self.glass_catalog_service.load_or_empty()
             self._refresh_catalog_ui()
             combo_by_section = {
