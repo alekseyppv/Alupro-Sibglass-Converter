@@ -3,7 +3,7 @@ from __future__ import annotations
 from PySide6.QtWidgets import QApplication
 
 from sibglass_app.config.settings import SettingsManager
-from sibglass_app.controllers.main_controller import MainController
+from sibglass_app.controllers import MainController
 from sibglass_app.repositories.excel_repository import ExcelRepository
 from sibglass_app.repositories.glass_file_repository import GlassFileRepository
 from sibglass_app.services.alupro_parser import AluProParserService

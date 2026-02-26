@@ -72,7 +72,7 @@ python -m sibglass_app.main
 
 ```bash
 pip install pyinstaller
-pyinstaller --noconfirm --onefile --windowed --name SibglassConverter sibglass_app/main.py
+pyinstaller --noconfirm --onefile --windowed --name SibglassConverter --hidden-import sibglass_app.controllers.main_controller sibglass_app/main.py
 ```
 
 Результат: `dist/SibglassConverter.exe`.
