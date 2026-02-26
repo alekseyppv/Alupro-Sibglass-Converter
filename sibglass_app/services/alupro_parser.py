@@ -41,17 +41,34 @@ class AluProParserService:
         if not cells:
             return None
 
+<<<<<<< codex/develop-industrial-desktop-application-in-python-kjbxuq
         formula = self._extract_formula(cells)
         if not formula:
             return None
 
         size_source = " ".join(cells[1:])
         count_source = " ".join(cells[2:])
+=======
+        if "," in cells[0]:
+            chunks = [part.strip() for part in cells[0].split(",") if part.strip()]
+            formula = chunks[0] if chunks else ""
+            size_source = " ".join(cells[1:] + chunks[1:])
+            count_source = " ".join(cells[2:] + chunks[2:])
+        else:
+            formula = cells[0]
+            size_source = " ".join(cells[1:])
+            count_source = " ".join(cells[2:])
+
+        if not formula or "заполнения" in formula.lower() or "сумма:" in formula.lower():
+            return None
+
+>>>>>>> main
         width, height = self._extract_size(size_source)
         count = self._extract_count(count_source)
         return FormulaItem(formula=formula, width=width, height=height, count=count)
 
     @staticmethod
+<<<<<<< codex/develop-industrial-desktop-application-in-python-kjbxuq
     def _extract_formula(cells: list[str]) -> str:
         # Частый случай: всё в первой ячейке "10-16-8, 1200x800, 2"
         first = cells[0]
@@ -79,6 +96,8 @@ class AluProParserService:
         return bool(re.search(r"\d", value))
 
     @staticmethod
+=======
+>>>>>>> main
     def _extract_size(source: str) -> tuple[int, int]:
         pair_match = re.search(r"(\d{2,5})\s*[xXхХ+]\s*(\d{2,5})", source)
         if pair_match:
