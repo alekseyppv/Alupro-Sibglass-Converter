@@ -4,6 +4,9 @@ from sibglass_app.config.paths import GLASS_FILE
 from sibglass_app.models.glass_catalog import GlassCatalog, SECTION_MAP
 
 
+_NORMALIZED_SECTION_MAP = {key.strip().lower(): value for key, value in SECTION_MAP.items()}
+
+
 class GlassFileRepository:
     def load(self) -> GlassCatalog:
         if not GLASS_FILE.exists():
@@ -16,10 +19,12 @@ class GlassFileRepository:
             line = raw.strip()
             if not line:
                 continue
-            header = line.rstrip(":")
-            if header in SECTION_MAP:
-                current_section = SECTION_MAP[header]
+
+            header_key = line.replace(":", "").strip().lower()
+            if header_key in _NORMALIZED_SECTION_MAP:
+                current_section = _NORMALIZED_SECTION_MAP[header_key]
                 continue
+
             if current_section:
                 items = getattr(catalog, current_section)
                 if line not in items:

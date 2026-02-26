@@ -10,6 +10,10 @@ from PySide6.QtCore import QTimer
 from sibglass_app.config.paths import GLASS_FILE
 from sibglass_app.config.settings import SettingsManager
 from sibglass_app.models.formula_item import FormulaRowState
+<<<<<<< codex/develop-industrial-desktop-application-in-python-kjbxuq
+from sibglass_app.models.glass_catalog import GlassCatalog
+=======
+>>>>>>> main
 from sibglass_app.models.order_item import OrderItem
 from sibglass_app.services.alupro_parser import AluProParserService
 from sibglass_app.services.autosave_service import AutosaveService
@@ -48,7 +52,11 @@ class MainController:
         self.excel_repository = excel_repository
 
         self.settings = self.settings_manager.load()
+<<<<<<< codex/develop-industrial-desktop-application-in-python-kjbxuq
+        self.catalog = GlassCatalog()
+=======
         self.catalog = None
+>>>>>>> main
         self._glass_mtime: float | None = None
 
         self._bind()
@@ -280,6 +288,10 @@ class MainController:
         try:
             self.catalog = self.glass_catalog_service.add_value(self.catalog, section_attr, value)
             self.glass_catalog_service.save(self.catalog)
+<<<<<<< codex/develop-industrial-desktop-application-in-python-kjbxuq
+            self.catalog, _ = self.glass_catalog_service.load_or_empty()
+=======
+>>>>>>> main
             self._refresh_catalog_ui()
             combo_by_section = {
                 "outer_glass": self.window.outer_combo,
