@@ -11,7 +11,6 @@ from sibglass_app.config.paths import GLASS_FILE
 from sibglass_app.config.settings import SettingsManager
 from sibglass_app.models.formula_item import FormulaRowState
 from sibglass_app.models.glass_catalog import GlassCatalog
-from sibglass_app.models.glass_catalog import GlassCatalog
 from sibglass_app.models.order_item import OrderItem
 from sibglass_app.services.alupro_parser import AluProParserService
 from sibglass_app.services.autosave_service import AutosaveService
@@ -50,7 +49,6 @@ class MainController:
         self.excel_repository = excel_repository
 
         self.settings = self.settings_manager.load()
-        self.catalog = GlassCatalog()
         self.catalog = GlassCatalog()
         self._glass_mtime: float | None = None
 
@@ -280,19 +278,27 @@ class MainController:
         if not value:
             return
 
+        combo_by_section = {
+            "outer_glass": self.window.outer_combo,
+            "middle_glass": self.window.middle_combo,
+            "inner_glass": self.window.inner_combo,
+            "spacers": self.window.spacer_combo,
+        }
+        target_combo = combo_by_section[section_attr]
+
         try:
+            # Моментально показать значение в UI
+            if target_combo.findText(value) < 0:
+                target_combo.addItem(value)
+            target_combo.setCurrentText(value)
+
             self.catalog = self.glass_catalog_service.add_value(self.catalog, section_attr, value)
             self.glass_catalog_service.save(self.catalog)
-            self.catalog, _ = self.glass_catalog_service.load_or_empty()
+
+            # Перечитать из файла для гарантии, что записалось именно в glass.txt
             self.catalog, _ = self.glass_catalog_service.load_or_empty()
             self._refresh_catalog_ui()
-            combo_by_section = {
-                "outer_glass": self.window.outer_combo,
-                "middle_glass": self.window.middle_combo,
-                "inner_glass": self.window.inner_combo,
-                "spacers": self.window.spacer_combo,
-            }
-            self._select_if_exists(combo_by_section[section_attr], value)
+            self._select_if_exists(target_combo, value)
             self._remember_glass_mtime()
         except Exception:
             logger.exception("Не удалось сохранить ручной ввод в glass.txt")
