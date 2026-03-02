@@ -13,14 +13,42 @@ class SibglassWriterService:
         start_row = self._find_table_start(sheet)
         self._write_items(sheet, start_row, items)
 
-    @staticmethod
-    def _fill_requisites(sheet: Worksheet, customer: str, address: str) -> None:
+    @classmethod
+    def _fill_requisites(cls, sheet: Worksheet, customer: str, address: str) -> None:
         customer_cell = find_cell_by_value(sheet, "Заказчик")
         address_cell = find_cell_by_value(sheet, "Адрес доставки")
         if customer_cell:
-            sheet.cell(row=customer_cell.row, column=customer_cell.column + 1, value=customer)
+            cls._write_text_right_of_label(sheet, customer_cell.row, customer_cell.column, customer)
         if address_cell:
-            sheet.cell(row=address_cell.row, column=address_cell.column + 1, value=address)
+            cls._write_text_right_of_label(sheet, address_cell.row, address_cell.column, address)
+
+    @classmethod
+    def _write_text_right_of_label(cls, sheet: Worksheet, row: int, label_col: int, text: str) -> None:
+        col = label_col + 1
+        max_search = max(sheet.max_column + 20, col + 20)
+
+        while col <= max_search:
+            merged_range = cls._find_merged_range(sheet, row, col)
+            if merged_range is None:
+                sheet.cell(row=row, column=col, value=text)
+                return
+
+            anchor_row, anchor_col = merged_range.min_row, merged_range.min_col
+            if anchor_row == row and anchor_col > label_col:
+                sheet.cell(row=anchor_row, column=anchor_col, value=text)
+                return
+
+            col = merged_range.max_col + 1
+
+        # Fallback: если всё справа занято merge-ячейками, пишем в следующую доступную обычную
+        sheet.cell(row=row, column=label_col + 1, value=text)
+
+    @staticmethod
+    def _find_merged_range(sheet: Worksheet, row: int, col: int):
+        for merged_range in sheet.merged_cells.ranges:
+            if merged_range.min_row <= row <= merged_range.max_row and merged_range.min_col <= col <= merged_range.max_col:
+                return merged_range
+        return None
 
     @staticmethod
     def _find_table_start(sheet: Worksheet) -> int:
