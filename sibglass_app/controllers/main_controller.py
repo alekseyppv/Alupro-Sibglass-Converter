@@ -6,6 +6,7 @@ import sys
 import traceback
 
 from PySide6.QtCore import QTimer
+from PySide6.QtWidgets import QDialog
 
 from sibglass_app.config.paths import GLASS_FILE
 from sibglass_app.config.settings import SettingsManager
@@ -63,6 +64,7 @@ class MainController:
         self.window.select_sibglass_btn.clicked.connect(self.on_pick_sibglass)
         self.window.save_btn.clicked.connect(self.on_generate)
         self.window.open_glass_btn.clicked.connect(self.on_open_glass_file)
+        self.window.refresh_formula_btn.clicked.connect(self.on_refresh_formulas)
 
         self.window.manual_outer_btn.clicked.connect(lambda: self.on_manual_add("outer_glass", "Стекло наружное"))
         self.window.manual_middle_btn.clicked.connect(lambda: self.on_manual_add("middle_glass", "Стекло среднее"))
@@ -231,6 +233,20 @@ class MainController:
             argon=self.window.argon.isChecked(),
         )
 
+    def on_refresh_formulas(self) -> None:
+        rows = self.window.formula_table.collect_rows()
+        updated: list[FormulaRowState] = []
+        for row in rows:
+            resolved = row.resolved_formula
+            modified = row.modified
+            if is_numeric_formula(row.source_formula):
+                new_value = self._autobuild(row.source_formula)
+                if new_value != row.resolved_formula:
+                    modified = True
+                resolved = new_value
+            updated.append(FormulaRowState(source_formula=row.source_formula, resolved_formula=resolved, modified=modified))
+        self.window.formula_table.set_rows(updated)
+
     def on_generate(self) -> None:
         try:
             self.window.set_busy(True)
@@ -271,7 +287,7 @@ class MainController:
 
     def on_manual_add(self, section_attr: str, title: str) -> None:
         dialog = ManualInputDialog(title, parent=self.window)
-        if dialog.exec() != dialog.Accepted:
+        if dialog.exec() != QDialog.DialogCode.Accepted:
             return
 
         value = dialog.value
@@ -287,15 +303,15 @@ class MainController:
         target_combo = combo_by_section[section_attr]
 
         try:
-            # Моментально показать значение в UI
             if target_combo.findText(value) < 0:
                 target_combo.addItem(value)
             target_combo.setCurrentText(value)
 
+            current_catalog, _ = self.glass_catalog_service.load_or_empty()
+            self.catalog = current_catalog
             self.catalog = self.glass_catalog_service.add_value(self.catalog, section_attr, value)
             self.glass_catalog_service.save(self.catalog)
 
-            # Перечитать из файла для гарантии, что записалось именно в glass.txt
             self.catalog, _ = self.glass_catalog_service.load_or_empty()
             self._refresh_catalog_ui()
             self._select_if_exists(target_combo, value)

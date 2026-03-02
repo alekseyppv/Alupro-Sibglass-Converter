@@ -80,7 +80,12 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(options_box)
 
         self.formula_table = FormulaTableWidget(self)
-        main_layout.addWidget(QLabel("Найденные формулы", self))
+        formulas_header = QHBoxLayout()
+        formulas_header.addWidget(QLabel("Найденные формулы", self))
+        formulas_header.addStretch(1)
+        self.refresh_formula_btn = QPushButton("Обновить формулы", self)
+        formulas_header.addWidget(self.refresh_formula_btn)
+        main_layout.addLayout(formulas_header)
         main_layout.addWidget(self.formula_table)
 
         bottom_row = QHBoxLayout()
@@ -135,6 +140,7 @@ class MainWindow(QMainWindow):
             self.manual_inner_btn,
             self.manual_spacer_btn,
             self.open_glass_btn,
+            self.refresh_formula_btn,
         ]:
             widget.setDisabled(busy)
         self.setCursor(Qt.WaitCursor if busy else Qt.ArrowCursor)

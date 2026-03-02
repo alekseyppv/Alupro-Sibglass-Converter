@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor
-from PySide6.QtWidgets import QTableWidget, QTableWidgetItem
+from PySide6.QtWidgets import QHeaderView, QTableWidget, QTableWidgetItem
 
 from sibglass_app.models.formula_item import FormulaRowState
 
@@ -13,6 +13,8 @@ class FormulaTableWidget(QTableWidget):
     def __init__(self, parent=None) -> None:
         super().__init__(0, len(self.HEADERS), parent)
         self.setHorizontalHeaderLabels(self.HEADERS)
+        self.setColumnWidth(0, 360)
+        self.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
         self.itemChanged.connect(self._on_item_changed)
         self._updating = False
 
@@ -22,7 +24,10 @@ class FormulaTableWidget(QTableWidget):
         for row_idx, row in enumerate(rows):
             source_item = QTableWidgetItem(row.source_formula)
             source_item.setFlags(source_item.flags() & ~Qt.ItemIsEditable)
+
             target_item = QTableWidgetItem(row.resolved_formula)
+            target_item.setForeground(QColor("black"))
+
             self.setItem(row_idx, 0, source_item)
             self.setItem(row_idx, 1, target_item)
             self._apply_highlight(row_idx, row.modified)
@@ -40,9 +45,11 @@ class FormulaTableWidget(QTableWidget):
     def _on_item_changed(self, item: QTableWidgetItem) -> None:
         if self._updating or item.column() != 1:
             return
+        item.setForeground(QColor("black"))
         self._apply_highlight(item.row(), True)
 
     def _apply_highlight(self, row: int, modified: bool) -> None:
         color = QColor("#fff59d") if modified else QColor("white")
         if self.item(row, 1):
             self.item(row, 1).setBackground(color)
+            self.item(row, 1).setForeground(QColor("black"))
