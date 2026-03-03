@@ -1,11 +1,8 @@
 from __future__ import annotations
 
 from openpyxl.cell.cell import MergedCell
-<<<<<<< codex/develop-industrial-desktop-application-in-python-ozqm8x
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
-=======
-from openpyxl.styles import Border, Font, PatternFill, Side
->>>>>>> main
+from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.worksheet.worksheet import Worksheet
 
 from sibglass_app.models.order_item import OrderItem
@@ -22,12 +19,10 @@ class SibglassWriterService:
     _FONT_DEFAULT = Font(name="Arial", size=10, color="000000")
     _FONT_ACCENT = Font(name="Arial", size=14, color="FF0000")
     _FILL_A = PatternFill(fill_type="solid", start_color="CCFFFF", end_color="CCFFFF")
-<<<<<<< codex/develop-industrial-desktop-application-in-python-ozqm8x
     _ALIGN_CENTER = Alignment(horizontal="center", vertical="center")
     _ALIGN_RIGHT = Alignment(horizontal="right", vertical="center")
-=======
->>>>>>> main
-
+    _ALIGN_CENTER = Alignment(horizontal="center", vertical="center")
+    _ALIGN_RIGHT = Alignment(horizontal="right", vertical="center")
     def write(self, workbook, customer: str, address: str, items: list[OrderItem]) -> None:
         sheet = workbook.active
         self._fill_requisites(sheet, customer, address)
@@ -37,7 +32,6 @@ class SibglassWriterService:
     def _fill_requisites(cls, sheet: Worksheet, customer: str, address: str) -> None:
         customer_cell = find_cell_by_value(sheet, "Заказчик")
         address_cell = find_cell_by_value(sheet, "Адрес доставки")
-<<<<<<< codex/develop-industrial-desktop-application-in-python-ozqm8x
 
         if customer_cell:
             cls._write_text_right_of_label(sheet, customer_cell.row, customer_cell.column, customer)
@@ -46,12 +40,6 @@ class SibglassWriterService:
             cls._write_text_right_of_label(sheet, address_cell.row, address_cell.column, address)
             # Требование: строка адреса высотой 22px
             sheet.row_dimensions[address_cell.row].height = 22
-=======
-        if customer_cell:
-            cls._write_text_right_of_label(sheet, customer_cell.row, customer_cell.column, customer)
-        if address_cell:
-            cls._write_text_right_of_label(sheet, address_cell.row, address_cell.column, address)
->>>>>>> main
 
     @classmethod
     def _write_text_right_of_label(cls, sheet: Worksheet, row: int, label_col: int, text: str) -> None:
@@ -61,7 +49,6 @@ class SibglassWriterService:
         while col <= max_search:
             merged_range = cls._find_merged_range(sheet, row, col)
             if merged_range is None:
-<<<<<<< codex/develop-industrial-desktop-application-in-python-ozqm8x
                 cls._set_value_same_row_safe(sheet, row, col, text)
                 return
 
@@ -70,23 +57,12 @@ class SibglassWriterService:
             anchor_row, anchor_col = merged_range.min_row, merged_range.min_col
             if anchor_row == row and anchor_col > label_col:
                 cls._set_value_same_row_safe(sheet, anchor_row, anchor_col, text)
-=======
-                cls._set_value_safe(sheet, row, col, text)
-                return
-
-            anchor_row, anchor_col = merged_range.min_row, merged_range.min_col
-            if anchor_row == row and anchor_col > label_col:
-                cls._set_value_safe(sheet, anchor_row, anchor_col, text)
->>>>>>> main
                 return
 
             col = merged_range.max_col + 1
 
-<<<<<<< codex/develop-industrial-desktop-application-in-python-ozqm8x
         cls._set_value_same_row_safe(sheet, row, label_col + 1, text)
-=======
-        cls._set_value_safe(sheet, row, label_col + 1, text)
->>>>>>> main
+        cls._set_value_same_row_safe(sheet, row, label_col + 1, text)
 
     @staticmethod
     def _find_merged_range(sheet: Worksheet, row: int, col: int):
@@ -96,18 +72,14 @@ class SibglassWriterService:
         return None
 
     @classmethod
-<<<<<<< codex/develop-industrial-desktop-application-in-python-ozqm8x
     def _set_value_same_row_safe(cls, sheet: Worksheet, row: int, col: int, value) -> None:
-=======
-    def _set_value_safe(cls, sheet: Worksheet, row: int, col: int, value) -> None:
->>>>>>> main
+    def _set_value_same_row_safe(cls, sheet: Worksheet, row: int, col: int, value) -> None:
         cell_obj = sheet.cell(row=row, column=col)
         if isinstance(cell_obj, MergedCell):
             merged_range = cls._find_merged_range(sheet, row, col)
             if merged_range is None:
                 return
             anchor_row, anchor_col = merged_range.min_row, merged_range.min_col
-<<<<<<< codex/develop-industrial-desktop-application-in-python-ozqm8x
             if anchor_row != row:
                 return
             sheet.cell(row=anchor_row, column=anchor_col, value=value)
@@ -124,13 +96,6 @@ class SibglassWriterService:
                 return
             anchor_row, anchor_col = merged_range.min_row, merged_range.min_col
             if value in (None, "") and (anchor_row, anchor_col) != (row, col):
-=======
-            if (anchor_row, anchor_col) == (row, col):
-                sheet.cell(row=row, column=col, value=value)
-                return
-
-            if value in (None, ""):
->>>>>>> main
                 return
             sheet.cell(row=anchor_row, column=anchor_col, value=value)
             return
@@ -155,7 +120,6 @@ class SibglassWriterService:
             cls._set_value_safe(sheet, row, 1, idx)
             cls._set_value_safe(sheet, row, 2, "")
             cls._set_value_safe(sheet, row, 3, item.formula)
-<<<<<<< codex/develop-industrial-desktop-application-in-python-ozqm8x
             cls._set_value_safe(sheet, row, 4, int(item.width))
             cls._set_value_safe(sheet, row, 5, int(item.height))
             cls._set_value_safe(sheet, row, 6, int(item.count))
@@ -172,22 +136,6 @@ class SibglassWriterService:
             cls._set_value_safe(sheet, total_row, 6, 0)
             cls._set_value_safe(sheet, total_row, 7, 0)
             cls._set_value_safe(sheet, total_row, 8, 0)
-=======
-            cls._set_value_safe(sheet, row, 4, item.width)
-            cls._set_value_safe(sheet, row, 5, item.height)
-            cls._set_value_safe(sheet, row, 6, item.count)
-            cls._set_value_safe(sheet, row, 7, round(item.area, 2))
-            cls._set_value_safe(sheet, row, 8, round(item.total_area, 2))
-            cls._style_data_row(sheet, row)
-
-        total_count = sum(item.count for item in items)
-        total_area_g = round(sum(item.area for item in items), 2)
-        total_area_h = round(sum(item.total_area for item in items), 2)
-
-        cls._set_value_safe(sheet, total_row, 6, int(total_count))
-        cls._set_value_safe(sheet, total_row, 7, total_area_g)
-        cls._set_value_safe(sheet, total_row, 8, total_area_h)
->>>>>>> main
 
         cls._style_total_cells(sheet, total_row)
 
@@ -197,10 +145,7 @@ class SibglassWriterService:
             cell = sheet.cell(row=row, column=col)
             if isinstance(cell, MergedCell):
                 continue
-<<<<<<< codex/develop-industrial-desktop-application-in-python-ozqm8x
 
-=======
->>>>>>> main
             if col == 1:
                 cell.fill = cls._FILL_A
                 cell.border = cls._BORDER_THIN
@@ -208,21 +153,18 @@ class SibglassWriterService:
             elif 2 <= col <= 6:
                 cell.border = cls._BORDER_THIN
                 cell.font = cls._FONT_DEFAULT
-<<<<<<< codex/develop-industrial-desktop-application-in-python-ozqm8x
                 if 3 <= col <= 6:
                     cell.alignment = cls._ALIGN_CENTER
                 if col in (4, 5, 6):
-=======
-                if col == 6:
->>>>>>> main
+                if 3 <= col <= 6:
+                    cell.alignment = cls._ALIGN_CENTER
+                if col in (4, 5, 6):
                     cell.number_format = "0"
             else:  # G, H
                 cell.border = cls._BORDER_THIN
                 cell.font = cls._FONT_ACCENT
-<<<<<<< codex/develop-industrial-desktop-application-in-python-ozqm8x
                 cell.alignment = cls._ALIGN_RIGHT
-=======
->>>>>>> main
+                cell.alignment = cls._ALIGN_RIGHT
                 cell.number_format = "0.00"
 
     @classmethod
@@ -235,15 +177,10 @@ class SibglassWriterService:
                     cell = sheet.cell(row=merged.min_row, column=merged.min_col)
             cell.font = cls._FONT_ACCENT
             if col == 6:
-<<<<<<< codex/develop-industrial-desktop-application-in-python-ozqm8x
                 cell.alignment = cls._ALIGN_CENTER
                 cell.number_format = "0"
             else:
                 cell.alignment = cls._ALIGN_RIGHT
-=======
-                cell.number_format = "0"
-            else:
->>>>>>> main
                 cell.number_format = "0.00"
 
     @staticmethod
