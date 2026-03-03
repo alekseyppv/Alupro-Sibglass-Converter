@@ -36,8 +36,7 @@ class SibglassWriterService:
 
         if address_cell:
             cls._write_text_right_of_label(sheet, address_cell.row, address_cell.column, address)
-            # Требование: строка адреса высотой 22px
-            sheet.row_dimensions[address_cell.row].height = 22
+            # Сохраняем только значение, без изменения форматирования соседних строк
 
     @classmethod
     def _write_text_right_of_label(cls, sheet: Worksheet, row: int, label_col: int, text: str) -> None:
@@ -101,6 +100,9 @@ class SibglassWriterService:
     @classmethod
     def _write_items(cls, sheet: Worksheet, items: list[OrderItem]) -> None:
         start_row, total_row = cls._find_table_bounds(sheet)
+        if total_row is None:
+            raise ValueError("Не найдена строка 'ВСЕГО' в таблице шаблона. Запись отменена, чтобы не повредить нижние данные.")
+
         existing_count = max(total_row - start_row, 0)
         target_count = len(items)
 
@@ -186,14 +188,14 @@ class SibglassWriterService:
 
     @staticmethod
     def _is_total_row(sheet: Worksheet, row_idx: int) -> bool:
-        for col in (1, 2, 3):
+        for col in range(1, 9):
             value = str(sheet.cell(row_idx, col).value or "").strip().lower()
             if "всего" in value:
                 return True
         return False
 
     @classmethod
-    def _find_table_bounds(cls, sheet: Worksheet) -> tuple[int, int]:
+    def _find_table_bounds(cls, sheet: Worksheet) -> tuple[int, int | None]:
         header_row = cls._find_header_row(sheet)
         start_row = header_row + 1 if header_row is not None else 14
 
@@ -202,8 +204,5 @@ class SibglassWriterService:
             if cls._is_total_row(sheet, row_idx):
                 total_row = row_idx
                 break
-
-        if total_row is None:
-            total_row = max(start_row, sheet.max_row + 1)
 
         return start_row, total_row
