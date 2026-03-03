@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from openpyxl.cell.cell import MergedCell
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
-from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.worksheet.worksheet import Worksheet
 
 from sibglass_app.models.order_item import OrderItem
@@ -21,8 +20,7 @@ class SibglassWriterService:
     _FILL_A = PatternFill(fill_type="solid", start_color="CCFFFF", end_color="CCFFFF")
     _ALIGN_CENTER = Alignment(horizontal="center", vertical="center")
     _ALIGN_RIGHT = Alignment(horizontal="right", vertical="center")
-    _ALIGN_CENTER = Alignment(horizontal="center", vertical="center")
-    _ALIGN_RIGHT = Alignment(horizontal="right", vertical="center")
+
     def write(self, workbook, customer: str, address: str, items: list[OrderItem]) -> None:
         sheet = workbook.active
         self._fill_requisites(sheet, customer, address)
@@ -62,7 +60,6 @@ class SibglassWriterService:
             col = merged_range.max_col + 1
 
         cls._set_value_same_row_safe(sheet, row, label_col + 1, text)
-        cls._set_value_same_row_safe(sheet, row, label_col + 1, text)
 
     @staticmethod
     def _find_merged_range(sheet: Worksheet, row: int, col: int):
@@ -72,7 +69,6 @@ class SibglassWriterService:
         return None
 
     @classmethod
-    def _set_value_same_row_safe(cls, sheet: Worksheet, row: int, col: int, value) -> None:
     def _set_value_same_row_safe(cls, sheet: Worksheet, row: int, col: int, value) -> None:
         cell_obj = sheet.cell(row=row, column=col)
         if isinstance(cell_obj, MergedCell):
@@ -156,14 +152,10 @@ class SibglassWriterService:
                 if 3 <= col <= 6:
                     cell.alignment = cls._ALIGN_CENTER
                 if col in (4, 5, 6):
-                if 3 <= col <= 6:
-                    cell.alignment = cls._ALIGN_CENTER
-                if col in (4, 5, 6):
                     cell.number_format = "0"
             else:  # G, H
                 cell.border = cls._BORDER_THIN
                 cell.font = cls._FONT_ACCENT
-                cell.alignment = cls._ALIGN_RIGHT
                 cell.alignment = cls._ALIGN_RIGHT
                 cell.number_format = "0.00"
 

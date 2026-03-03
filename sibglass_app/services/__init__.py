@@ -1,15 +1,14 @@
-from .alupro_parser import AluProParserService
-from .autosave_service import AutosaveService
-from .formula_builder import FormulaBuilderService
-from .glass_catalog_service import GlassCatalogService
-from .sibglass_writer import SibglassWriterService
-from .validation_service import ValidationService
+"""Service package.
+
+Важно: не импортируем подмодули здесь, чтобы в frozen-сборках
+не падать из-за преждевременной загрузки всех сервисов сразу.
+"""
 
 __all__ = [
-    "AluProParserService",
-    "AutosaveService",
-    "FormulaBuilderService",
-    "GlassCatalogService",
-    "SibglassWriterService",
-    "ValidationService",
+    "alupro_parser",
+    "autosave_service",
+    "formula_builder",
+    "glass_catalog_service",
+    "sibglass_writer",
+    "validation_service",
 ]
