@@ -258,14 +258,21 @@ class MainController:
                 for row in self.window.formula_table.collect_rows()
                 if row.resolved_formula.strip()
             }
-            orders: list[OrderItem] = []
-            idx = 1
+            grouped_items: dict[str, list] = {}
             for item in alupro_items:
                 resolved = formula_map.get(item.formula, "")
                 if not resolved:
                     continue
-                orders.append(OrderItem(index=idx, formula=resolved, width=item.width, height=item.height, count=item.count))
-                idx += 1
+                if resolved not in grouped_items:
+                    grouped_items[resolved] = []
+                grouped_items[resolved].append(item)
+
+            orders: list[OrderItem] = []
+            idx = 1
+            for resolved, group in grouped_items.items():
+                for item in group:
+                    orders.append(OrderItem(index=idx, formula=resolved, width=item.width, height=item.height, count=item.count))
+                    idx += 1
 
             wb = self.excel_repository.open_workbook(self.window.sibglass_line.text())
             self.window.progress_bar.setValue(50)
